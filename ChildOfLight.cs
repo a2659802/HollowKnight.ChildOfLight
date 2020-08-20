@@ -209,21 +209,8 @@ namespace ChildOfLight
 
             orbcontrol.Fsm.States = _list.ToArray();
 
-            //var chasehero = orbcontrol.GetAction<ChaseObjectV2>("Chase Hero", 3);
-            //var chasehero = new ChaseObjectV2 {speedMax=20,accelerationForce=50,offsetX=0,offsetY=0 };//[HutongGames.PlayMaker.FsmOwnerDefault,Knight,20,50,0,0]
-            //var chasehero = new ChaseObject { speedMax = 20 ,acceleration = 0.8f,targetSpread = 5,spreadResetTimeMin=2,spreadResetTimeMax = 3};
-            //targetEnemy.Value = null;
-            //var chaseenemy = new ChaseObjectV2 { target = targetEnemy, speedMax = 20, accelerationForce = 50, offsetX = 0, offsetY = 0 };
-
             chaseEnemy.Actions = new FsmStateAction[]
             {
-                /*new ModCommon.Util.InvokeMethod(()=>{
-                    Modding.Logger.Log("Chase Enemy!");
-                    UpdateTarget();
-                    Log($"TargetEnemy:{targetEnemy.Value?.name}");
-                    
-                    }),
-                chaseenemy,*/
                 new Trigger2dEventLayer{
                     trigger =  PlayMakerUnity2d.Trigger2DType.OnTriggerEnter2D,
                     collideLayer = 11,
@@ -402,7 +389,6 @@ namespace ChildOfLight
             UnityEngine.Object.DontDestroyOnLoad(SpikeCenter);
             SpikeCenter.transform.position = HeroController.instance.transform.position;
 
-            LogDebug("Center:" + SpikeCenter.transform.position);
         }
         public IEnumerator SpawnOrb()
         {
@@ -422,11 +408,11 @@ namespace ChildOfLight
 
             if(PlayerData.instance!=null&&PlayerData.instance.equippedCharm_33)
             {
-                yield return new WaitForSeconds(0.5f);
+                yield return new WaitForSeconds(0.2f);
             }
             else
             {
-                yield return new WaitForSeconds(1f);
+                yield return new WaitForSeconds(0.8f);
             }
             var orb = orbPre.Spawn(spawnPoint);
 
@@ -484,8 +470,6 @@ namespace ChildOfLight
                 x += spacing;
                 _spikes.Add(s);
                 s.SetActive(true);
-
-                LogDebug(s.transform.position);
             }
             return true;
         }
@@ -500,7 +484,7 @@ namespace ChildOfLight
             dmg.damageDealt = 20;
             dmg.direction = 90 * 3;
             dmg.ignoreInvuln = false;
-            dmg.magnitudeMult = 1.2f;
+            dmg.magnitudeMult = 1f;
             dmg.moveDirection = false;
             dmg.specialType = 0;
 
@@ -508,12 +492,20 @@ namespace ChildOfLight
         }
         private void Instance_CharmUpdateHook(PlayerData data, HeroController controller)
         {
-
+            if(!PlayerData.instance.equippedCharm_21)
+            {
+                orbPre.GetComponent<DamageEnemies>().attackType = AttackTypes.Nail;
+                orbPre.GetComponent<DamageEnemies>().magnitudeMult = 2f;
+            }
+            else
+            {
+                orbPre.GetComponent<DamageEnemies>().attackType = AttackTypes.Spell;
+            }
             if (PlayerData.instance.equippedCharm_19) // 萨满
             {
 
                 var beamctrl = BeamSweeper.LocateMyFSM("Control");
-                beamctrl.GetAction<iTweenMoveBy>("Beam Sweep R 2", 6).vector = new Vector3(0, 50 * 0.5f, 0);
+                beamctrl.GetAction<iTweenMoveBy>("Beam Sweep R 2", 6).vector = new Vector3(0, 50 * 0.7f, 0);
 
                 MaterialPropertyBlock propblock;
                 orbPre.GetComponent<DamageEnemies>().damageDealt = 30;

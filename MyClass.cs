@@ -1,5 +1,6 @@
 ﻿using HutongGames.PlayMaker;
 using System.Collections;
+using System.Linq;
 using UnityEngine;
 using TooltipAttribute = HutongGames.PlayMaker.TooltipAttribute;
 
@@ -7,7 +8,7 @@ namespace ChildOfLight
 {
     public class OrbChaseObject : MonoBehaviour
     {
-        public GameObject target;
+        public HealthManager target;
         public float accelerationForce;
         public float speedMax;
         private Rigidbody2D rb2d;
@@ -19,19 +20,48 @@ namespace ChildOfLight
                 Destroy(gameObject);
                 return;
             }
-            target = FindObjectOfType<HealthManager>().gameObject;
-            speedMax = Random.Range(10, 30);
-            accelerationForce = Random.Range(30, 60);
+            var targets = FindObjectsOfType<HealthManager>().ToList();
+            speedMax = Random.Range(20, 30);
+            accelerationForce = Random.Range(40, 70);
+            for(int i=0;i<targets.ToArray().Length;i++)
+            {
+                var t = targets[i];
+                if (!searchActiveEnemy(t))
+                {
+                    targets.Remove(t);
+                }
+            }
+            if(targets.Count>0)
+            {
+                int selected = Random.Range(0, targets.Count);
+                for (int i = 0; i < targets.Count; i++)
+                {
+                    if (!(targets[i].deathReset))
+                    {
+                        selected = i;
+                    }
+                }
+                target = targets[selected];
+            }
+
+        }
+        private static bool searchActiveEnemy(HealthManager hm)
+        {
+            if (hm == null || (!hm.gameObject.activeSelf) || hm.isDead)
+                return false;
+            if (hm.IsInvincible)
+                return false;
+            return true;
         }
         private IEnumerator Start()
         {
             yield return new WaitUntil(() =>
             {
-                if (target != null)
+                if (target != null && target.gameObject.activeSelf && !target.isDead && !target.IsInvincible)
                 {
                     return true;
                 }
-                target = FindObjectOfType<HealthManager>().gameObject;
+                target = FindObjectOfType<HealthManager>();
                 return false;
             });
             rb2d.bodyType = 0;
@@ -40,7 +70,7 @@ namespace ChildOfLight
         {
             SetChase(rb2d, target, accelerationForce, speedMax);
         }
-        public static void SetChase(Rigidbody2D rb2d, GameObject target, float accelerationForce, float speedMax)
+        public static void SetChase(Rigidbody2D rb2d, HealthManager target, float accelerationForce, float speedMax)
         {
             if (target == null || rb2d == null)
                 return;
@@ -112,7 +142,7 @@ namespace ChildOfLight
                         }
                         catch
                         {
-                            Modding.Logger.LogDebug("Ignore this exception");
+                            //Modding.Logger.LogDebug("Ignore this exception");
                         }
                     }
                 }
