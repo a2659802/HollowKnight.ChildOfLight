@@ -1,6 +1,8 @@
 ﻿using HutongGames.PlayMaker;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using UnityEngine;
 using TooltipAttribute = HutongGames.PlayMaker.TooltipAttribute;
 
@@ -22,7 +24,7 @@ namespace ChildOfLight
             }
             var targets = FindObjectsOfType<HealthManager>().ToList();
             speedMax = Random.Range(20, 30);
-            accelerationForce = Random.Range(40, 70);
+            accelerationForce = Random.Range(40, 60);
             for(int i=0;i<targets.ToArray().Length;i++)
             {
                 var t = targets[i];
@@ -33,25 +35,68 @@ namespace ChildOfLight
             }
             if(targets.Count>0)
             {
-                int selected = Random.Range(0, targets.Count);
-                for (int i = 0; i < targets.Count; i++)
+                var best = MatchBest(targets);
+                if (best == null)
                 {
-                    if (!(targets[i].deathReset))
-                    {
-                        selected = i;
-                    }
+                    Modding.Logger.LogDebug("No Match!");
+                    int selected = Random.Range(0, targets.Count);
+                    target = targets[selected];
                 }
-                target = targets[selected];
+                else
+                {
+                    target = best;
+                }
             }
 
         }
+        /*public static void debugPrint(HealthManager target)
+        {
+            Log($"[{target.name}][{target.isActiveAndEnabled},{target.gameObject.GetComponent<Collider2D>()?.isTrigger}]{target.hp},{target.hasSpecialDeath},{target.deathReset},{target.damageOverride},{target.isDead},{target.InvincibleFromDirection},{target.IsInvincible}");
+        }*/
         private static bool searchActiveEnemy(HealthManager hm)
         {
             if (hm == null || (!hm.gameObject.activeSelf) || hm.isDead)
                 return false;
             if (hm.IsInvincible)
                 return false;
+            if (hm.hp < 1)
+                return false;
             return true;
+        }
+        private HealthManager MatchBest(List<HealthManager> targets)
+        {
+            if (targets.Count < 1)
+                return null;
+            else if (targets.Count == 1)
+                return targets[0];
+            else
+            {
+
+                float min_factor = 999 + 1*(-0.05f);
+                HealthManager best = null;
+                foreach(var hm in targets)
+                {
+                    var polordis = hm.transform.position - gameObject.transform.position;
+                    var distance = polordis.x * polordis.x + polordis.y * polordis.y;
+                    var hp = hm.hp;
+                    var cur_factor = (-0.05f)*hp + distance;
+                    var coll = hm.gameObject.GetComponent<Collider2D>();
+                    if(coll && coll.isTrigger)
+                    {
+                        cur_factor += 100;
+                    }
+                    if(cur_factor>0 && cur_factor<min_factor && !hm.deathReset)
+                    {
+                        min_factor = cur_factor;
+                        best = hm;
+                    }
+                    if(!hm.hasSpecialDeath)
+                    {
+                        return hm;
+                    }
+                }
+                return best;
+            }
         }
         private IEnumerator Start()
         {

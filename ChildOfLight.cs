@@ -22,6 +22,7 @@ namespace ChildOfLight
         GameObject HKBlast;
         GameObject SpikePre;
         GameObject SpikeCenter;
+        private int setupDone = 0;
         private readonly List<GameObject> _spikes = new List<GameObject>();
 
         public override void Initialize(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects)
@@ -60,9 +61,12 @@ namespace ChildOfLight
 
             #region Hooks
             ModHooks.Instance.AfterSavegameLoadHook += ApplyTrigger;
-            ModHooks.Instance.CharmUpdateHook += Instance_CharmUpdateHook;
+            GameManager.instance.StartCoroutine(WaitSetup(()=> ModHooks.Instance.CharmUpdateHook += Instance_CharmUpdateHook));
             #endregion
+
+ 
         }
+
 
         private void ApplyTrigger(SaveGameData data)
         {
@@ -72,7 +76,18 @@ namespace ChildOfLight
         private IEnumerator WaitHero(Action a)
         {
             yield return new WaitWhile(() => HeroController.instance == null);
-            a.Invoke();
+            yield return new WaitForSeconds(0.3f);
+            a?.Invoke();
+        }
+        private IEnumerator WaitSetup(Action a)
+        {
+            while (setupDone < 4)
+            {
+                yield return null;
+            }
+               
+            LogDebug("All ability Setup Donw");
+            a?.Invoke();
         }
         public void Unload()
         {
@@ -237,6 +252,7 @@ namespace ChildOfLight
             //orb.AddComponent<MyChaseObject>();
             orbcontrol.Fsm.SaveActions();
 
+            setupDone++;
         }
         private void SetupBlast()
         {
@@ -311,6 +327,7 @@ namespace ChildOfLight
             hkblastfsm.Fsm.SaveActions();
             HKBlast.SetActive(true);
 
+            setupDone++;
         }
         private void SetupBeam()
         {
@@ -354,14 +371,15 @@ namespace ChildOfLight
             beamctrl.Fsm.SaveActions();
             BeamSweeper.SetActive(true);
 
-            try
+            /*try
             {
                 FSMUtility.SendEventToGameObject(BeamSweeper, "BEAM SWEEP R2");
             }
             catch
             {
 
-            }
+            }*/
+            setupDone++;
         }
         private void SetupSpike()
         {
@@ -389,12 +407,13 @@ namespace ChildOfLight
             UnityEngine.Object.DontDestroyOnLoad(SpikeCenter);
             SpikeCenter.transform.position = HeroController.instance.transform.position;
 
+            setupDone++;
         }
         public IEnumerator SpawnOrb()
         {
 
 
-            var spawnPoint = new Vector3(HeroController.instance.transform.position.x + UnityEngine.Random.Range(-2, 2), HeroController.instance.transform.position.y + 2 + UnityEngine.Random.Range(0, 5));
+            var spawnPoint = new Vector3(HeroController.instance.transform.position.x + UnityEngine.Random.Range(-2, 2), HeroController.instance.transform.position.y + 2 + UnityEngine.Random.Range(-3, 2));
             var ShotCharge = GameObject.Instantiate(this.ShotCharge);
             var ShotCharge2 = GameObject.Instantiate(this.ShotCharge2);
             ShotCharge.transform.position = spawnPoint;
@@ -492,7 +511,7 @@ namespace ChildOfLight
         }
         private void Instance_CharmUpdateHook(PlayerData data, HeroController controller)
         {
-            if(!PlayerData.instance.equippedCharm_21)
+            if (!PlayerData.instance.equippedCharm_21)
             {
                 orbPre.GetComponent<DamageEnemies>().attackType = AttackTypes.Nail;
                 orbPre.GetComponent<DamageEnemies>().magnitudeMult = 2f;
@@ -501,6 +520,7 @@ namespace ChildOfLight
             {
                 orbPre.GetComponent<DamageEnemies>().attackType = AttackTypes.Spell;
             }
+
             if (PlayerData.instance.equippedCharm_19) // 萨满
             {
 
@@ -517,9 +537,11 @@ namespace ChildOfLight
                 scale.x *= 1.2f;
                 scale.y *= 1.2f;
                 orbPre.transform.localScale = scale;
+
             }
             else
             {
+
                 var beamctrl = BeamSweeper.LocateMyFSM("Control");
                 beamctrl.GetAction<iTweenMoveBy>("Beam Sweep R 2", 6).vector = new Vector3(0, 50, 0);
 
@@ -530,6 +552,7 @@ namespace ChildOfLight
                 orbPre.GetComponent<Renderer>().SetPropertyBlock(propblock);
                 var scale = new Vector3(1.4f, 1.4f, 1);
                 orbPre.transform.localScale = scale;
+
             }
 
         }
