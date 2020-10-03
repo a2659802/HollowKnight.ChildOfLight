@@ -114,9 +114,11 @@ namespace ChildOfLight
         {
             var spellctrl = HeroController.instance.spellControl;
             spellctrl.InsertMethod("Spore Cloud 2", 0, () => {
+                HKBlast.transform.position = HeroController.instance.transform.position;
                 HKBlast.LocateMyFSM("Control").SetState("Blast");
             });
             spellctrl.InsertMethod("Spore Cloud", 0, () => {
+                HKBlast.transform.position = HeroController.instance.transform.position;
                 HKBlast.LocateMyFSM("Control").SetState("Blast");
             });
 
@@ -174,7 +176,7 @@ namespace ChildOfLight
                 HeroController.instance.TakeMP(10);
             });
 
-            spellctrl.Fsm.SaveActions();
+            spellctrl.Fsm.SaveActions(); 
 
         }
         private void SetupOrb()
@@ -256,7 +258,7 @@ namespace ChildOfLight
         }
         private void SetupBlast()
         {
-            HKBlast.transform.SetParent(HeroController.instance.transform);
+            //HKBlast.transform.SetParent(HeroController.instance.transform);
             HKBlast.transform.position = HeroController.instance.transform.position;
             GameObject blast;
             var fsm = HKBlast.LocateMyFSM("Control");
